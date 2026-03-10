@@ -1,2 +1,5 @@
 .claude
 commit.ps1
+quick_start.md
+docker-compose.yml
+docker_setup.md
