@@ -1,5 +1,6 @@
 .claude
 commit.ps1
+commit.sh
 quick_start.md
 docker-compose.yml
 docker_setup.md
