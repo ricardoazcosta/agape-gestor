@@ -6,42 +6,43 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // ==================== ENUMS ====================
 
 enum UserRole {
-  ADMIN      // Administrador total do sistema
-  TREASURER  // Tesoureiro - pode criar e editar transações
-  COUNCIL    // Conselho - apenas leitura e relatórios
-  PASTOR     // Pastor - apenas leitura e relatórios
-  VIEWER     // Visualizador - apenas leitura básica
+  ADMIN // Administrador total do sistema
+  TREASURER // Tesoureiro - pode criar e editar transações
+  COUNCIL // Conselho - apenas leitura e relatórios
+  PASTOR // Pastor - apenas leitura e relatórios
+  VIEWER // Visualizador - apenas leitura básica
 }
 
 enum TransactionType {
-  INCOME   // Entrada (Dízimos, Ofertas)
-  EXPENSE  // Saída (Despesas operacionais)
+  INCOME // Entrada (Dízimos, Ofertas)
+  EXPENSE // Saída (Despesas operacionais)
 }
 
 enum IncomeCategory {
-  TITHE      // Dízimo
-  OFFERING   // Oferta
-  DONATION   // Doação
-  EVENT      // Evento especial
-  OTHER      // Outros
+  TITHE // Dízimo
+  OFFERING // Oferta
+  DONATION // Doação
+  EVENT // Evento especial
+  OTHER // Outros
 }
 
 enum ExpenseCategory {
-  MAINTENANCE  // Manutenção predial
-  UTILITIES    // Utilidades (água, luz, internet)
-  SALARY       // Salários
-  PREBEND      // Prebenda pastoral
-  MISSION      // Missões
-  EVENT        // Eventos
-  SUPPLY       // Suprimentos
-  OTHER        // Outros
+  MAINTENANCE // Manutenção predial
+  UTILITIES // Utilidades (água, luz, internet)
+  SALARY // Salários
+  PREBEND // Prebenda pastoral
+  MISSION // Missões
+  EVENT // Eventos
+  SUPPLY // Suprimentos
+  OTHER // Outros
 }
 
 enum AuditAction {
@@ -58,15 +59,15 @@ model User {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
-  password  String   // Hash bcrypt
+  password  String // Hash bcrypt
   role      UserRole @default(VIEWER)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  transactions     Transaction[]
-  auditLogs        AuditLog[]
+  transactions      Transaction[]
+  auditLogs         AuditLog[]
   createdCategories Category[]
 
   @@index([email])
@@ -75,13 +76,13 @@ model User {
 }
 
 model Category {
-  id          String   @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   description String?
   type        TransactionType
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   createdById String
 
   // Relations
@@ -102,14 +103,14 @@ model Transaction {
   date        DateTime        @default(now())
 
   // Metadata para dízimos nominais (opcional)
-  donorName   String?
+  donorName String?
 
   // Comprovante (futuro: URL do arquivo no storage)
-  receiptUrl  String?
+  receiptUrl String?
 
   createdById String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   category  Category   @relation(fields: [categoryId], references: [id])
@@ -126,18 +127,18 @@ model Transaction {
 model AuditLog {
   id        String      @id @default(uuid())
   action    AuditAction
-  entity    String      // Nome da entidade (Transaction, User, etc)
-  entityId  String      // ID da entidade afetada
-  oldValue  Json?       // Estado anterior (para UPDATE/DELETE)
-  newValue  Json?       // Estado novo (para CREATE/UPDATE)
+  entity    String // Nome da entidade (Transaction, User, etc)
+  entityId  String // ID da entidade afetada
+  oldValue  Json? // Estado anterior (para UPDATE/DELETE)
+  newValue  Json? // Estado novo (para CREATE/UPDATE)
   userId    String
   ipAddress String?
   userAgent String?
   timestamp DateTime    @default(now())
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id])
-  transaction  Transaction? @relation(fields: [transactionId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
   transactionId String?
 
   @@index([entity, entityId])
@@ -149,14 +150,14 @@ model AuditLog {
 // View materializada para relatórios (PostgreSQL)
 // Calculada periodicamente via cron job
 model MonthlyReport {
-  id            String   @id @default(uuid())
-  year          Int
-  month         Int
-  totalIncome   Decimal  @db.Decimal(12, 2)
-  totalExpense  Decimal  @db.Decimal(12, 2)
-  balance       Decimal  @db.Decimal(12, 2)
+  id               String   @id @default(uuid())
+  year             Int
+  month            Int
+  totalIncome      Decimal  @db.Decimal(12, 2)
+  totalExpense     Decimal  @db.Decimal(12, 2)
+  balance          Decimal  @db.Decimal(12, 2)
   transactionCount Int
-  generatedAt   DateTime @default(now())
+  generatedAt      DateTime @default(now())
 
   @@unique([year, month])
   @@index([year, month])
