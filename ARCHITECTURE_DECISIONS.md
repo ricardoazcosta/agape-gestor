@@ -41,10 +41,42 @@ frontend/
 
 ---
 
-## 2️⃣ Prisma ORM (Recomendado para Backend)
+## 2️⃣ NeonDB como Banco de Dados (Serverless PostgreSQL)
 
 ### ✅ Decisão
-Recomendamos **Prisma ORM** para o backend NestJS + PostgreSQL.
+Adotamos **NeonDB** (PostgreSQL serverless) como banco de dados principal, substituindo o PostgreSQL local via Docker.
+
+### 💡 Justificativa
+
+**Vantagens para o projeto:**
+- **Sem infraestrutura local:** Nenhum Docker necessário para o banco — basta uma string de conexão
+- **PostgreSQL completo:** Compatibilidade total com Prisma, migrações e queries SQL
+- **Escala automática:** Suporta crescimento sem reconfigurações manuais
+- **Branching de banco:** Ambientes isolados (dev/staging/prod) sem overhead operacional
+- **Custo-benefício:** Tier gratuito generoso para igrejas pequenas
+- **LGPD:** Dados residem em região configurável; NeonDB oferece conformidade SOC 2
+
+**Configuração de variáveis de ambiente:**
+```env
+# URL pooler — usada em runtime pelo PrismaService (neon adapter)
+DATABASE_URL="postgresql://user:pass@host-pooler.neon.tech/db?sslmode=require"
+
+# URL direta — usada pela CLI do Prisma (migrations, seed)
+DATABASE_URL_UNPOOLED="postgresql://user:pass@host.neon.tech/db?sslmode=require"
+```
+
+**Arquitetura de conexão:**
+```
+Runtime (API):  PrismaService → @neondatabase/serverless (Pool) → NeonDB via WebSocket
+CLI (Migrate):  prisma migrate → DATABASE_URL_UNPOOLED → NeonDB via TCP direto
+```
+
+---
+
+## 3️⃣ Prisma ORM (Recomendado para Backend)
+
+### ✅ Decisão
+Recomendamos **Prisma ORM** para o backend NestJS + NeonDB PostgreSQL.
 
 ### 💡 Justificativa
 
@@ -97,7 +129,7 @@ prisma.$use(async (params, next) => {
 
 ---
 
-## 3️⃣ Supabase - NÃO Recomendado (com ressalva)
+## 4️⃣ Supabase - NÃO Recomendado (com ressalva)
 
 ### ❌ Decisão
 **Não** usar Supabase como banco de dados principal.
@@ -105,36 +137,18 @@ prisma.$use(async (params, next) => {
 ### 💡 Justificativa
 
 **Contra argumentos:**
-- ❌ README já planeja **Docker + PostgreSQL local** (autocontenção)
-- ❌ Dados financeiros sensíveis (dízimos nominais) devem ser **on-premise**
-- ❌ Vendor lock-in com serviço externo
-- ❌ Custo recorrente (igrejas maiores = mais dados = mais caro)
-- ❌ Supabase Auth duplicaria lógica de autenticação do NestJS
-- ❌ Conformidade com LGPD mais simples com dados locais
+- ❌ NeonDB já fornece PostgreSQL serverless com melhor integração com Prisma
+- ❌ Supabase Auth duplicaria lógica de autenticação do NestJS (JWT próprio)
+- ❌ Custo recorrente pode crescer com volume de dados
+- ❌ Vendor lock-in com ecossistema Supabase (funções Edge, realtime, etc.)
 
 **Exceção - Casos de uso válidos:**
+- ✅ **Storage apenas:** Supabase Storage para upload de comprovantes/recibos PDF
 - ✅ **SaaS multi-tenant:** Se o plano for hospedar várias igrejas num só sistema
-- ✅ **Storage apenas:** Usar Supabase Storage para upload de comprovantes/recibos PDF
-- ✅ **Prototipagem rápida:** Validar MVP antes de produtizar
-
-### 🎯 Alternativa Recomendada
-```
-Stack On-Premise:
-├── PostgreSQL (Docker)         # Banco principal
-├── MinIO (Docker)              # Storage S3-compatible para PDFs
-├── NestJS + Prisma             # Backend
-└── Next.js                     # Frontend
-```
-
-**Benefícios:**
-- Controle total dos dados
-- Sem custos recorrentes de cloud
-- Backup e restore simplificados
-- Auditoria mais fácil para assembleia
 
 ---
 
-## 4️⃣ Stack Final Aprovada
+## 5️⃣ Stack Final Aprovada
 
 ```
 ┌─────────────────────────────────────────┐
@@ -147,25 +161,26 @@ Stack On-Premise:
               │ REST API
               ↓
 ┌─────────────────────────────────────────┐
-│        BACKEND (NestJS + Prisma)        │
-│  - Clean Architecture (Modular)         │
+│        BACKEND (NestJS + Prisma 5)      │
+│  - Clean Architecture (Modular DDD)     │
 │  - JWT Authentication                   │
 │  - RBAC (Role-Based Access Control)     │
 │  - Audit Logs (Prisma Middleware)       │
 └─────────────┬───────────────────────────┘
-              │ SQL
+              │ @neondatabase/serverless (WebSocket)
               ↓
 ┌─────────────────────────────────────────┐
-│        DATABASE (PostgreSQL 15)         │
-│  - ACID Transactions                    │
-│  - Immutable Audit Logs                 │
-│  - Point-in-time Recovery               │
+│        DATABASE (NeonDB Serverless)     │
+│  - PostgreSQL compatível (ACID)         │
+│  - Branching por ambiente               │
+│  - Backups automáticos                  │
+│  - Escalabilidade automática            │
 └─────────────────────────────────────────┘
 ```
 
 ---
 
-## 5️⃣ Princípios de Design
+## 6️⃣ Princípios de Design
 
 ### 🔐 Segurança
 - JWT com refresh tokens
@@ -195,11 +210,12 @@ Stack On-Premise:
 
 ## 📅 Histórico de Decisões
 
-| Data       | Decisão                    | Status    |
-|------------|----------------------------|-----------|
-| 2026-03-10 | Migração para Next.js 15   | ✅ Aprovado |
-| 2026-03-10 | Adoção do Prisma ORM       | ✅ Recomendado |
-| 2026-03-10 | Rejeição do Supabase (DB)  | ✅ Aprovado |
+| Data       | Decisão                            | Status    |
+|------------|------------------------------------|-----------|
+| 2026-03-10 | Migração para Next.js 15           | ✅ Aprovado |
+| 2026-03-10 | Adoção do Prisma ORM               | ✅ Aprovado |
+| 2026-03-10 | Rejeição do Supabase (DB)          | ✅ Aprovado |
+| 2026-03-12 | Migração para NeonDB (serverless)  | ✅ Aprovado |
 
 ---
 
@@ -209,10 +225,10 @@ Stack On-Premise:
 2. **Exportação de relatórios:** Biblioteca para PDF (jsPDF vs Puppeteer)?
 3. **Internacionalização:** Suporte para múltiplos idiomas (i18next)?
 4. **CI/CD:** GitHub Actions vs GitLab CI?
-5. **Hosting:** Self-hosted (Docker Compose) vs Cloud (Railway/Render)?
+5. **Hosting do backend:** Railway vs Render vs VPS própria?
 
 ---
 
-**Última atualização:** 2026-03-10
+**Última atualização:** 2026-03-12
 **Responsável pelas decisões:** Equipe de arquitetura
 **Status do documento:** Em evolução

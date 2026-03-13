@@ -175,15 +175,29 @@ npm run test:cov
 
 ---
 
-## 🗄️ Prisma ORM
+## 🗄️ Prisma ORM + NeonDB
+
+### Banco de Dados
+
+O projeto usa **NeonDB** (PostgreSQL serverless) como banco de dados. Não é necessário Docker para o banco — basta configurar as variáveis de ambiente com as connection strings do NeonDB.
+
+**Variáveis obrigatórias em `backend/.env`:**
+```env
+# URL pooler — usada pelo PrismaService em runtime
+DATABASE_URL="postgresql://user:pass@host-pooler.neon.tech/db?sslmode=require"
+
+# URL direta — usada pela CLI do Prisma (migrations, seed)
+DATABASE_URL_UNPOOLED="postgresql://user:pass@host.neon.tech/db?sslmode=require"
+```
 
 ### Schema
 
 O schema está em `prisma/schema.prisma` com:
 - **Enums:** UserRole, TransactionType, AuditAction
-- **Models:** User, Transaction, Category, AuditLog
+- **Models:** User, Transaction, Category, AuditLog, MonthlyReport
 - **Indexes:** Otimizados para queries frequentes
 - **Constraints:** Unique, foreign keys, cascades
+- **Precisão financeira:** `Decimal @db.Decimal(12,2)` nos campos de valor
 
 ### Comandos Prisma
 
@@ -191,10 +205,10 @@ O schema está em `prisma/schema.prisma` com:
 # Gerar Prisma Client
 npm run prisma:generate
 
-# Criar migration
+# Criar/aplicar migration
 npm run prisma:migrate
 
-# Abrir Prisma Studio (GUI)
+# Abrir Prisma Studio (GUI local)
 npm run prisma:studio
 
 # Seed database
@@ -213,22 +227,22 @@ npm install
 
 ### 2. Configurar variáveis de ambiente
 
-Copie `.env.example` para `.env` e ajuste:
+Copie `.env.example` para `.env` e preencha com suas strings do NeonDB:
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/agape_gestor?schema=public"
+# URL pooler (runtime)
+DATABASE_URL="postgresql://user:pass@host-pooler.neon.tech/db?sslmode=require"
+
+# URL direta (CLI/migrations)
+DATABASE_URL_UNPOOLED="postgresql://user:pass@host.neon.tech/db?sslmode=require"
+
 JWT_SECRET="your-secret-key"
 PORT=3001
 ```
 
-### 3. Subir banco de dados
+> Crie seu banco gratuito em [neon.tech](https://neon.tech). Não é necessário Docker.
 
-```bash
-# Com Docker Compose (na raiz do projeto)
-docker-compose up -d
-```
-
-### 4. Executar migrations
+### 3. Executar migrations
 
 ```bash
 npm run prisma:migrate

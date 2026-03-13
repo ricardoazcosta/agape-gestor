@@ -20,10 +20,10 @@ A gestão de tesourarias voluntárias muitas vezes sofre com planilhas frágeis 
 
 O sistema foi desenhado utilizando a abordagem de **Monolito Modular** com **Clean Architecture**, priorizando a consistência de dados e facilitando manutenções futuras.
 
-* **Frontend:** React.js + TypeScript + Tailwind CSS
-* **Backend:** Node.js com NestJS + TypeScript
-* **Banco de Dados:** PostgreSQL (Relacional, propriedades ACID estritas)
-* **Infraestrutura Local:** Docker & Docker Compose
+* **Frontend:** Next.js 15 (App Router) + TypeScript + Tailwind CSS
+* **Backend:** NestJS + TypeScript + Prisma ORM 5 (Clean Architecture / DDD)
+* **Banco de Dados:** NeonDB — PostgreSQL serverless (sem Docker necessário)
+* **ORM:** Prisma 5 com suporte nativo ao NeonDB
 
 
 
@@ -45,6 +45,35 @@ O repositório é dividido em duas partes principais:
 
 ```text
 agape-gestor/
-├── backend/        # API RESTful em NestJS (Regras de negócio e segurança)
-├── frontend/       # SPA em React.js (Interface do usuário)
-└── docker-compose  # Configuração do banco de dados local
+├── backend/              # API RESTful em NestJS + Prisma (DDD / Clean Architecture)
+├── frontend/             # Next.js 15 com App Router (Interface do usuário)
+└── docker-compose.yml    # Opcional — uso offline apenas
+```
+
+> O banco de dados roda no **NeonDB** (cloud). Não é necessário Docker para o banco.
+
+---
+
+## 🚀 Como Começar
+
+Consulte o [QUICK_START.md](QUICK_START.md) para um guia passo a passo.
+
+**Pré-requisitos:**
+- Node.js 18+
+- Conta gratuita no [NeonDB](https://neon.tech)
+
+---
+
+## 📚 Documentação
+
+| Arquivo | Descrição |
+|---------|-----------|
+| [QUICK_START.md](QUICK_START.md) | Guia de setup em 5 minutos |
+| [backend/README.md](backend/README.md) | Documentação técnica do backend |
+| [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) | Decisões arquiteturais |
+| [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | Resumo do que foi implementado |
+
+---
+
+**Status do Projeto:** 🟢 Funcional e Testado
+**Última Atualização:** 2026-03-12

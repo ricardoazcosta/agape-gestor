@@ -40,7 +40,7 @@ frontend/src/
 #### Tecnologias
 - ✅ NestJS 10 (Framework)
 - ✅ Prisma ORM 5 (Database)
-- ✅ PostgreSQL (Banco de dados)
+- ✅ NeonDB — PostgreSQL serverless (Banco de dados)
 - ✅ Jest (Testes unitários)
 - ✅ TypeScript estrito
 
@@ -178,7 +178,7 @@ agape-gestor/
 │   ├── tsconfig.json
 │   └── tailwind.config.ts
 │
-├── backend/                     ✅ NestJS + Prisma + DDD
+├── backend/                     ✅ NestJS + Prisma + NeonDB + DDD
 │   ├── src/
 │   │   ├── core/              # Shared (Database, Guards)
 │   │   ├── modules/           # Domain modules (DDD)
@@ -187,11 +187,12 @@ agape-gestor/
 │   │   └── main.ts
 │   ├── prisma/
 │   │   └── schema.prisma      # Database schema
+│   ├── .env.example           # Template de variáveis (sem credenciais)
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── nest-cli.json
 │
-├── docker-compose.yml           🔜 Pendente
+├── docker-compose.yml           ℹ️ Opcional (uso offline)
 ├── README.md                    ✅ Documentação principal
 ├── ARCHITECTURE_DECISIONS.md   ✅ Decisões arquiteturais
 └── IMPLEMENTATION_SUMMARY.md   📄 Este arquivo
@@ -218,13 +219,21 @@ agape-gestor/
 - Middleware para auditoria
 - Melhor DX (Developer Experience)
 
+### ✅ NeonDB como Database
+**Decisão:** NeonDB (PostgreSQL serverless)
+**Motivo:**
+- PostgreSQL completo sem necessidade de Docker
+- Branching por ambiente (dev/staging/prod)
+- Integração nativa com Prisma 5
+- Backups automáticos com PITR
+- Tier gratuito adequado para igrejas
+
 ### ❌ Supabase como Database
 **Decisão:** Não usar
 **Motivo:**
-- Dados sensíveis devem ficar on-premise
-- Plano original: Docker + PostgreSQL
-- Evitar vendor lock-in
-- Sem custos recorrentes
+- NeonDB oferece PostgreSQL mais limpo sem lock-in no ecossistema Supabase
+- Supabase Auth duplicaria lógica JWT do NestJS
+- Vendor lock-in com funções Edge e realtime Supabase
 
 ### ✅ DDD + Clean Architecture
 **Decisão:** Arquitetura em camadas
@@ -250,10 +259,11 @@ npm run dev
 ```bash
 cd backend
 npm install
+cp .env.example .env     # preencher com strings do NeonDB
 npm run prisma:generate
-npm run build
-npm test
-# npm run start:dev (quando tiver Docker)
+npm run prisma:migrate
+npm run prisma:seed
+npm run start:dev
 ```
 
 ---
@@ -278,11 +288,11 @@ npm test
 - [ ] Testes com React Testing Library
 
 ### **Infraestrutura**
-- [ ] Docker Compose (PostgreSQL + Backend + Frontend)
-- [ ] MinIO para storage de comprovantes
+- [x] NeonDB — banco serverless em produção ✅
+- [ ] MinIO para storage de comprovantes (ou Supabase Storage)
 - [ ] CI/CD (GitHub Actions)
-- [ ] Environment de staging
-- [ ] Backup automático do banco
+- [ ] Environment de staging (NeonDB branch)
+- [ ] Backup automático do banco (NeonDB já inclui PITR)
 
 ---
 
@@ -346,5 +356,5 @@ npm test
 ---
 
 **Status do Projeto:** 🟢 Funcional e Testado
-**Última Atualização:** 2026-03-10
+**Última Atualização:** 2026-03-12
 **Próximo Marco:** Implementar autenticação JWT + RBAC
