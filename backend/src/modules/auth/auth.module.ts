@@ -21,11 +21,9 @@ import { USER_REPOSITORY } from './domain/user.repository.interface'
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>('JWT_SECRET') ??
-          'agape-gestor-secret-change-in-production',
-        signOptions: { expiresIn: '8h' },
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '24h') },
       }),
     }),
   ],
