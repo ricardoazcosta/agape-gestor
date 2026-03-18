@@ -20,9 +20,10 @@ export default function LoginPage() {
 
     try {
       const response = await api.post('/auth/login', { email, password })
-      const { token } = response.data
+      const { accessToken, user } = response.data.data
 
-      localStorage.setItem('token', token)
+      localStorage.setItem('token', accessToken)
+      localStorage.setItem('user', JSON.stringify(user))
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao fazer login')
